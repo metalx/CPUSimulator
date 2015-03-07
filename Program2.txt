@@ -1,0 +1,71 @@
+//Action1: ini X0
+//To access memory whose index is bigger than 63,
+//as the immediate number is limited to 6 bits,
+//we must firstly initialize the X0
+//Here is what we do:
+
+LDA 0 0 63	//R0 = 63
+
+//This is how we get a random memory number(63*256) large than 63:shift 63 left 8bits
+SRC 0 8 L L	//R0 = R0*256
+
+//Store the number we just got to memory 63
+STR 0 0 63	//M(63) = R0 = 63*256
+LDX 0 63	//X0 = M(63)
+
+
+//Action2: store 63*256 (as initial address)
+//The number 63*256 we just got will be the initial address for all the data memory we access later
+//we store this number into M(16191)
+STX 1 63	//M(X0+63) = X0 = 63*256
+
+
+//Action3: get input
+//This is where we let users to input
+//R3 works as a counter as we use a circle to do the input actions.
+//input->R0->M(X0)
+IN 0 0		//R0 = input
+OUT 0 1
+STR 0 1 0	//M(X0) = R0 = input
+STR 0 1 10	//M(X0+10) = R0 = input
+
+//X0++
+LDA 1 1 1	//R1 = X0+1
+STR 1 0 63	//M(63) = R1 = X0+1
+LDX 0 63	//X0 = M(63)
+
+CHK 1 0
+JNE 1 0 7
+
+
+//Action4: Sort
+LDX 1 53
+
+LDA 2 0 10
+LDA 3 0 9
+
+LDR 0 1 0
+SMR 0 1 1
+JGE 0 0 26
+LDR 0 1 0
+LDR 1 1 1
+STR 0 1 1
+STR 1 1 0
+
+LDA 1 1 1	//R1 = X0+1
+STR 1 0 63	//M(63) = R1 = X0+1
+LDX 0 63	//X0 = M(63)
+
+SOB 3 0 19
+LDX 1 54
+SOB 2 0 18
+
+
+//Action5: Input sequence
+IN 1 0		//R1 = input
+STR 1 1 20	//M(X0) = R1 = input
+LDA 1 1 1	//R1 = X0+1
+STR 1 0 63	//M(63) = R1 = X0+1
+LDX 0 63	//X0 = M(63)
+CHK 1 0
+JNE 1 0 32     

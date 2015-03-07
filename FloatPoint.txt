@@ -1,0 +1,15 @@
+//convert 17,18 to float point then do add
+//result is stored in both R0 and FP0
+LDA 0 0 17
+STR 0 0 50
+CNVRT 1 0 50
+STFR 0 0 50
+
+LDA 0 0 18
+STR 0 0 52
+CNVRT 1 0 52
+
+FADD 0 0 50
+
+LDFR 0 0 50
+CNVRT 0 0 50

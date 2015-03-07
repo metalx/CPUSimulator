@@ -1,0 +1,124 @@
+//Action1: ini X0
+//To access memory whose index is bigger than 63,
+//as the immediate number is limited to 6 bits,
+//we must firstly initialize the X0
+//Here is what we do:
+
+LDA 0 0 63	//R0 = 63
+
+//This is how we get a random memory number(63*256) large than 63:shift 63 left 8bits
+SRC 0 8 L L	//R0 = R0*256
+
+//Store the number we just got to memory 63
+STR 0 0 63	//M(63) = R0 = 63
+LDX 0 63	//X0 = M(63)
+
+
+//Action2: store 63*256 (as initial address)
+//The number 63*256 we just got will be the initial address for all the data memory we access later
+//we store this number into M(16191)
+STX 1 63	//M(X0+63) = X0 = 63*256
+
+
+//Action3: get input
+//This is where we let users to input 20 numbers
+//R3 works as a counter as we use a circle to do the input actions.
+
+//Subaction1:set counter
+LDA 3 0 21	//R3 = 21
+
+//Subaction2:input->R0->M(X0)
+CHK 1 0		//R1 = STATUS
+JZ 1 0 10	//IF STATUS == 0, BACK TO CHK
+IN 0 0		//R0 = input
+CHK 1 0		//R1 = STATUS
+JZ 1 0 19	//IF STATUS == 0, JUMP TO STORE RO
+LDA 2 0 10
+MUL 0 2
+STR 1 0 63
+IN 0 0
+AMR 0 0 63
+JMP 0 11
+STR 0 1 0	//M(X0) = R0 = input
+
+//Subaction3: X0++
+//Each time at the end of the circle, we should add 1 to X0
+//So that next time, the input will be put into the next memory cell
+LDA 1 1 1	//R1 = X0+1
+STR 1 0 63	//M(63) = R1 = X0+1
+LDX 0 63	//X0 = M(63)
+
+//Subaction4: circle back or end
+SOB 3 0 8	//if R0 != 0 back;else end circle
+
+
+//Action4: get absolute values of the differences
+//get the differences of the first 20 numbers and the last one
+//the store the absolute values of them into the memory
+
+//Subaction1:reset X0 to 63*256
+//the ini address of X0 is stored in M(16191)
+LDX 1 42 //X0 = M(X0+42),X0 = 16149 now
+
+//Subaction2: ini
+LDR 0 1 20	//R0 = the last input
+LDR 2 1 20	//R2 = a copy of the last input
+LDA 3 0 20	//counter R3 = 20
+
+//Subaction3: get absolute values of differences circularly
+SMR 0 1 0	//R0 = R0 - M(X0)
+JGE 0 0 32	//if R0 >= 0, jump to 32;
+
+//if R0 is a negative value: R0 = -R0
+NOT 0		//R0 = ~R0
+AIR 0 1		//R0 = R0 + 1
+
+//Store Ro into memory
+STR 0 1 21	//M(X0+21) = R0 = |difference|
+
+//recovery R0:R0<-M(63)<-R0
+STR 2 0 63	//M(63) = R2
+LDR 0 0 63	//R0 = M(63)
+
+//X0++
+LDA 1 1 1	
+STR 1 0 63
+LDX 0 63
+
+//circle back or end
+SOB 3 0 28
+
+//Action5: find the min value
+//find the minimum value of the 20 values we just got
+LDA 3 0 19	//counter R3 = 19
+LDA 2 0 20	//R2 = 20
+LDR 1 1 1	//R1 = M(X0)
+SMR 1 1 2	//R1 = R1 - M(X0+1)
+JGE 1 0 47	//if R1 >= 0, jump to 41
+
+//Store the min value
+LDR 1 1 1	//R1 = M(X0)
+STR 1 1 2	//M(X0+1) = R1
+JMP 0 49	//to circle end
+
+//Store the index of the min value
+STR 3 0 63	//M(63) = R3
+LDR 2 0 63	//R2 = M(63)
+
+//X0++
+LDA 0 1 1
+STR 0 0 63
+LDX 0 63
+SOB 3 0 41
+
+//Output 
+LDA 0 0 20
+STR 2 0 63
+SMR 0 0 63
+AMR 0 1 24
+STR 0 1 25
+LDR 0 1 25 I
+LDX 1 24
+LDR 1 1 20
+OUT 0 1
+OUT 1 1
